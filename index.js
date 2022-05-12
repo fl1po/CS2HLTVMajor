@@ -1,16 +1,4 @@
 javascript: (() => {
-    picks = {
-        challengers: {
-            wonPicks: ['Vitality', 'G2', 'Outsiders', 'ENCE', 'Liquid'],
-        },
-        legends: {
-            wonPicks: [],
-        },
-    };
-
-    picks.challengers.lostPicks = [picks.challengers.threeZero, picks.challengers.zeroThree];
-    picks.legends.lostPicks = [];
-
     function setStyle(teams, styles) {
         teams.forEach(team => {
             Object.entries(styles).forEach(([style, value]) => {
@@ -24,9 +12,8 @@ javascript: (() => {
         const isOverview = activeTab === 'Overview';
         if (isOverview) {
             return teams.map(team => 
-            Array.from(team.childNodes)
-                .filter(node => node.className === 'text-ellipsis'))
-                .map(team => team[0]);
+                Array.from(team.childNodes)
+                    .filter(node => node.className === 'text-ellipsis'))
         } else {
             return teams;
         }
@@ -45,6 +32,7 @@ javascript: (() => {
 
     (function () {
         const activeTab = getActiveTab();
+        const isOverview = activeTab === 'Overview';
         const currentStage = getCurrentStage();
         const currentStageData = JSON.parse(localStorage.getItem(currentStage));
         switch (activeTab) {
@@ -52,15 +40,16 @@ javascript: (() => {
                 var allTeams = [...document.getElementsByClassName('team text-ellipsis')];
                 break;
             case 'Matches':
-                var allTeams = [...document.getElementsByClassName('matchTeamName text-ellipsis')];
+                var allTeams = [...document.getElementsByClassName('matchTeam')];
                 break;
             default:
                 var allTeams = [];
                 break;
         }
-        if (activeTab === 'Overview') {
-            const teams = getTeams(allTeams);
-            teams.forEach(team => {
+        if (isOverview) {
+            const teams = getTeams(allTeams).map(team => team[0]);
+            const results = [...teams.map(team => team.parentElement.parentElement.parentElement.children)].map(nodes => [...nodes].find((node) => node.className === 'points cell-width-record').innerText);
+            teams.forEach((team, index) => {
                 const teamNodes = Array.from(team.childNodes);
                 const teamName = teamNodes[0].firstChild.data;
                 const className = 'pick ' + teamName;
@@ -73,9 +62,13 @@ javascript: (() => {
                     team.append(select);
                     select.onchange = (e) => {
                         const data = JSON.parse(localStorage.getItem(currentStage));
+                        console.log(results[index]);
                         const newData = {
                             ...data,
-                            [teamName]: e.target.value,
+                            [teamName]: {
+                                value: e.target.value,
+                                state: results[index],
+                            },
                         };
                         localStorage.setItem(currentStage, JSON.stringify(newData));
                     };
@@ -84,40 +77,53 @@ javascript: (() => {
                         const optionNode = document.createElement('option');
                         optionNode.value = option;
                         optionNode.text = option;
-                        optionNode.selected = currentStageData && option === currentStageData[teamName];
+                        optionNode.selected = currentStageData && currentStageData[teamName] && option === currentStageData[teamName].value;
                         select.appendChild(optionNode);
                     })
                 }
                 
             });
         }
-        const advance = Object.entries(currentStageData).filter(([team, value]) => value === 'advance').map(([team]) => team);
-        const threeZero = Object.entries(currentStageData).find(([team, value]) => value === '3-0')[0];
-        const zeroThree = Object.entries(currentStageData).find(([team, value]) => value === '0-3')[0];
-        const { wonPicks, lostPicks } = picks.challengers;
+        const advance = currentStageData && Object.entries(currentStageData).filter(([_, { value }]) => value === 'advance').map(([team]) => team);
+        const threeZero = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '3-0') || [])[0];
+        const zeroThree = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '0-3') || [])[0];
+        const wonPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => value === 'advance' && state.startsWith('3')).map(([team]) => team);
+        const lostPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => {
+            return (
+                value === 'advance' && state.endsWith('3')
+            ) || (
+                value === '3-0' && !state.endsWith('0')
+            ) || (
+                value === '0-3' && !state.startsWith('3')
+            );
+        }).map(([team]) => team);
         const teamSets = [
             {
                 teamsCond: (team) => ![...advance, threeZero, zeroThree].includes(team.innerText),
                 style: {
                     color: '#87a3bf',
+                    textDecoration: 'none',
                 },
             },
             {
                 teamsCond: (team) => advance.includes(team.innerText),
                 style: {
                     color: 'green',
+                    textDecoration: 'none',
                 },
             },
             {
                 teamsCond: (team) => team.innerText === threeZero,
                 style: {
                     color: 'orange',
+                    textDecoration: 'none',
                 },
             },
             {
                 teamsCond: (team) => team.innerText === zeroThree,
                 style: {
                     color: 'red',
+                    textDecoration: 'none',
                 },
             },
             {
@@ -135,7 +141,7 @@ javascript: (() => {
             }
         ];
         teamSets.forEach((set) => {
-            const allTabsTeams = getTeams(allTeams).map(team => team.firstChild).filter(set.teamsCond);
+            const allTabsTeams = getTeams(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(set.teamsCond);
             setStyle(allTabsTeams, set.style)
         });
     })()
