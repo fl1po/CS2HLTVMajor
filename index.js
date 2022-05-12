@@ -4,7 +4,7 @@ javascript: (() => {
             advance: ['ENCE', 'G2', 'Astralis', 'Vitality', 'forZe', 'Outsiders', 'Liquid'],
             threeZero: 'MIBR',
             zeroThree: 'IHC',
-            wonPicks: ['Vitality', 'G2', 'Outsiders'],
+            wonPicks: ['Vitality', 'G2', 'Outsiders', 'ENCE', 'Liquid'],
         },
         legends: {
             advance: [],
@@ -18,13 +18,17 @@ javascript: (() => {
     picks.challengers.lostPicks = [picks.challengers.threeZero, picks.challengers.zeroThree];
     picks.legends.lostPicks = [];
 
-    function setColors(teams, color, isOverview) {
+    function setStyle(teams, styles) {
         teams.forEach(team => {
-            team.style.color = color;
+            Object.entries(styles).forEach(([style, value]) => {
+                team.style[style] = value;
+            })
         });
     }
 
-    function getTeams(teams, isOverview) {
+    function getTeams(teams) {
+        const activeTab = getActiveTab();
+        const isOverview = activeTab === 'Overview';
         if (isOverview) {
             return teams.map(team => 
             Array.from(team.childNodes)
@@ -35,25 +39,11 @@ javascript: (() => {
         }
     }
 
-    function excludeLostPicks(teams, isOverview) {
-        teams.forEach(team => {
-            team.style.textDecoration = 'line-through';
-        });
-    }
-
-    function includeWonPicks(teams, isOverview) {
-        teams.forEach(team => {
-            team.style.fontWeight = '1000';
-            team.style.fontSize = '17px';
-        });
-    }
-
     function getActiveTab() {
         return document.getElementsByClassName('event-hub-link active')[0].innerText;
     }
 
     (function () {
-        const { threeZero, zeroThree, wonPicks, lostPicks, advance } = picks.challengers;
         const activeTab = getActiveTab();
         switch (activeTab) {
             case 'Overview':
@@ -66,16 +56,50 @@ javascript: (() => {
                 var allTeams = [];
                 break;
         }
-        const isOverview = activeTab === 'Overview';
-        const greens = getTeams(allTeams.filter((team) => advance.includes(team.innerText)), isOverview);
-        const oranges = getTeams(allTeams.filter(team => team.innerText === threeZero), isOverview);
-        const reds = getTeams(allTeams.filter(team => team.innerText === zeroThree), isOverview);
-        const excludedTeams = getTeams(allTeams.filter(team => lostPicks.includes(team.innerText)), isOverview);
-        const includedTeams = getTeams(allTeams.filter(team => wonPicks.includes(team.innerText)), isOverview);
-        setColors(greens, 'green', isOverview);
-        setColors(oranges, 'orange', isOverview);
-        setColors(reds, 'red', isOverview);
-        excludeLostPicks(excludedTeams, isOverview);
-        includeWonPicks(includedTeams, isOverview);
+        if (activeTab === 'Overview') {
+            allTeams.forEach(team => {
+                check = document.createElement('input');
+                check.type = 'checkbox';
+                team.append(check);
+            });
+        }
+        const { threeZero, zeroThree, wonPicks, lostPicks, advance } = picks.challengers;
+        const teamSets = [
+            {
+                teamsCond: (team) => advance.includes(team.innerText),
+                style: {
+                    color: 'green',
+                },
+            },
+            {
+                teamsCond: (team) => team.innerText === threeZero,
+                style: {
+                    color: 'orange',
+                },
+            },
+            {
+                teamsCond: (team) => team.innerText === zeroThree,
+                style: {
+                    color: 'red',
+                },
+            },
+            {
+                teamsCond: (team) => lostPicks.includes(team.innerText),
+                style: {
+                    textDecoration: 'line-through',
+                },
+            },
+            {
+                teamsCond: (team) => wonPicks.includes(team.innerText),
+                style: {
+                    fontWeight: '1000',
+                    fontSize: '16px',
+                },
+            }
+        ];
+        teamSets.forEach((set) => {
+            const allTabsTeams = getTeams(allTeams.filter(set.teamsCond));
+            setStyle(allTabsTeams, set.style)
+        });
     })()
 })()
