@@ -55,6 +55,15 @@ javascript: (() => {
                 const teamName = teamNodes[0].firstChild.data;
                 const className = 'pick ' + teamName;
                 const selectNode = teamNodes.find(node => node.className === className);
+                const data = JSON.parse(localStorage.getItem(currentStage));
+                const updatedData = {
+                    ...data,
+                    [teamName]: {
+                        ...data[teamName],
+                        state: results[index],
+                    },
+                };
+                localStorage.setItem(currentStage, JSON.stringify(updatedData));
                 if (!selectNode) {
                     const select = document.createElement('select');
                     select.id = team.innerText;
@@ -63,7 +72,6 @@ javascript: (() => {
                     team.append(select);
                     select.onchange = (e) => {
                         const data = JSON.parse(localStorage.getItem(currentStage));
-                        console.log(results[index]);
                         const newData = {
                             ...data,
                             [teamName]: {
