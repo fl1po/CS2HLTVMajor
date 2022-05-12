@@ -20,13 +20,14 @@ javascript: (() => {
     }
 
     function getActiveTab() {
-        return document.getElementsByClassName('event-hub-link active')[0].innerText;
+        const tabNode = document.getElementsByClassName('event-hub-link active');
+        return tabNode && tabNode[0] && tabNode[0].innerText;
     }
 
     function getCurrentStage() {
         const title = document.getElementsByClassName('event-hub-title')[0].innerText;
-        if (title.includes('Legends')) return 'legends';
         if (title.includes('Challengers')) return 'challengers';
+        if (title.includes('Major')) return 'legends';
         throw `The event is not for Pick'ems`;
     }
 
@@ -84,7 +85,7 @@ javascript: (() => {
                 
             });
         }
-        const advance = currentStageData && Object.entries(currentStageData).filter(([_, { value }]) => value === 'advance').map(([team]) => team);
+        const advance = currentStageData && Object.entries(currentStageData).filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
         const threeZero = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '3-0') || [])[0];
         const zeroThree = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '0-3') || [])[0];
         const wonPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => value === 'advance' && state.startsWith('3')).map(([team]) => team);
@@ -94,7 +95,7 @@ javascript: (() => {
             ) || (
                 value === '3-0' && !state.endsWith('0')
             ) || (
-                value === '0-3' && !state.startsWith('3')
+                value === '0-3' && !state.startsWith('3') && state.endsWith('3')
             );
         }).map(([team]) => team);
         const teamSets = [
