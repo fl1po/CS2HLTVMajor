@@ -1,4 +1,3 @@
-* edit selected teams in index.js
 * copy index.js content into a new bookmark
 * open any major page and use the bookmark
 
