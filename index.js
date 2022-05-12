@@ -59,7 +59,7 @@ javascript: (() => {
                 const updatedData = {
                     ...data,
                     [teamName]: {
-                        ...data[teamName],
+                        ...(data || {})[teamName],
                         state: results[index],
                     },
                 };
@@ -112,6 +112,8 @@ javascript: (() => {
                 style: {
                     color: '#87a3bf',
                     textDecoration: 'none',
+                    fontWeight: '400',
+                    fontSize: '12px',
                 },
             },
             {
@@ -119,6 +121,8 @@ javascript: (() => {
                 style: {
                     color: 'green',
                     textDecoration: 'none',
+                    fontWeight: '400',
+                    fontSize: '12px',
                 },
             },
             {
@@ -126,6 +130,8 @@ javascript: (() => {
                 style: {
                     color: 'orange',
                     textDecoration: 'none',
+                    fontWeight: '400',
+                    fontSize: '12px',
                 },
             },
             {
@@ -133,12 +139,16 @@ javascript: (() => {
                 style: {
                     color: 'red',
                     textDecoration: 'none',
+                    fontWeight: '400',
+                    fontSize: '12px',
                 },
             },
             {
                 teamsCond: (team) => lostPicks.includes(team.innerText),
                 style: {
                     textDecoration: 'line-through',
+                    fontWeight: '400',
+                    fontSize: '12px',
                 },
             },
             {
