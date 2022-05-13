@@ -7,7 +7,7 @@ javascript: (() => {
         });
     }
 
-    function getTeams(teams) {
+    function getTeamNodes(teams) {
         const activeTab = getActiveTab();
         const isOverview = activeTab === 'Overview';
         if (isOverview) {
@@ -48,7 +48,7 @@ javascript: (() => {
                 break;
         }
         if (isOverview) {
-            const teams = getTeams(allTeams).map(team => team[0]);
+            const teams = getTeamNodes(allTeams).map(team => team[0]);
             const results = [...teams.map(team => team.parentElement.parentElement.parentElement.children)].map(nodes => [...nodes].find((node) => node.className === 'points cell-width-record').innerText);
             teams.forEach((team, index) => {
                 const teamNodes = Array.from(team.childNodes);
@@ -106,41 +106,38 @@ javascript: (() => {
                 value === '0-3' && !state.startsWith('3') && state.endsWith('3')
             );
         }).map(([team]) => team);
+        const defaultStyles = {
+            textDecoration: 'none',
+            fontWeight: '400',
+            fontSize: '12px',
+        };
         const teamSets = [
             {
                 teamsCond: (team) => ![...advance, threeZero, zeroThree].includes(team.innerText),
                 style: {
                     color: '#87a3bf',
-                    textDecoration: 'none',
-                    fontWeight: '400',
-                    fontSize: '12px',
+                    ...defaultStyles,
                 },
             },
             {
                 teamsCond: (team) => advance.includes(team.innerText),
                 style: {
                     color: 'green',
-                    textDecoration: 'none',
-                    fontWeight: '400',
-                    fontSize: '12px',
+                    ...defaultStyles,
                 },
             },
             {
                 teamsCond: (team) => team.innerText === threeZero,
                 style: {
                     color: 'orange',
-                    textDecoration: 'none',
-                    fontWeight: '400',
-                    fontSize: '12px',
+                    ...defaultStyles,
                 },
             },
             {
                 teamsCond: (team) => team.innerText === zeroThree,
                 style: {
                     color: 'red',
-                    textDecoration: 'none',
-                    fontWeight: '400',
-                    fontSize: '12px',
+                    ...defaultStyles,
                 },
             },
             {
@@ -160,7 +157,7 @@ javascript: (() => {
             }
         ];
         teamSets.forEach((set) => {
-            const allTabsTeams = getTeams(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(set.teamsCond);
+            const allTabsTeams = getTeamNodes(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(set.teamsCond);
             setStyle(allTabsTeams, set.style)
         });
     })()
