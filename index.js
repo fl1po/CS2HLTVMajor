@@ -96,14 +96,22 @@ javascript: (() => {
         const advance = currentStageData && Object.entries(currentStageData).filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
         const threeZero = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '3-0') || [])[0];
         const zeroThree = currentStageData && (Object.entries(currentStageData).find(([_, { value }]) => value === '0-3') || [])[0];
-        const wonPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => value === 'advance' && state.startsWith('3')).map(([team]) => team);
+        const wonPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => {
+            return (
+                value === 'advance' && state.startsWith('3')
+            ) || (
+                value === '3-0' && state.startsWith('3') && state.endsWith('0')
+            ) || (
+                value === '0-3' && state.startsWith('0') && state.endsWith('3')
+            )
+        }).map(([team]) => team);
         const lostPicks = currentStageData && Object.entries(currentStageData).filter(([_, { value, state }]) => {
             return (
                 value === 'advance' && state.endsWith('3')
             ) || (
                 value === '3-0' && !state.endsWith('0')
             ) || (
-                value === '0-3' && !state.startsWith('3') && state.endsWith('3')
+                value === '0-3' && !state.startsWith('0') && state.endsWith('3')
             );
         }).map(([team]) => team);
         const defaultStyles = {
