@@ -54,7 +54,6 @@ function setData() {
             const teamNodes = Array.from(team.childNodes);
             const teamName = teamNodes[0].firstChild.data;
             const className = 'pick ' + teamName;
-            let selectNode = teamNodes.find(node => node.className === className);
             const data = JSON.parse(localStorage.getItem(currentStage));
             const updatedData = {
                 ...data,
@@ -73,41 +72,34 @@ function setData() {
                 if (advanceLimit && option === 'advance' && data[teamName] && data[teamName].value !== 'advance') return false;
                 return true;
             });
+            let selectNode = teamNodes.find(node => node.className === className);
             if (!selectNode) {
                 selectNode = document.createElement('select');
                 selectNode.id = team.innerText;
                 selectNode.className = className;
                 selectNode.style.margin = '0 20px';
                 team.append(selectNode);
-                selectNode.onchange = (e) => {
-                    const newData = {
-                        ...data,
-                        [teamName]: {
-                            value: e.target.value,
-                            state: results[index],
-                        },
-                    };
-                    console.log({ teamName, newData });
-                    localStorage.setItem(currentStage, JSON.stringify(newData));
-                    setData();
-                };
             } else {
                 while (selectNode.firstChild) {
                     selectNode.removeChild(selectNode.firstChild);
                 }
-                selectNode.onchange = (e) => {
-                    const newData = {
-                        ...data,
-                        [teamName]: {
-                            value: e.target.value,
-                            state: results[index],
-                        },
-                    };
-                    console.log({ teamName, newData });
-                    localStorage.setItem(currentStage, JSON.stringify(newData));
-                    setData();
-                };
             }
+            if (options.length === 1 && options[0] === '') {
+                selectNode.style.display = 'none';
+            } else {
+                selectNode.style.display = 'inline';
+            }
+            selectNode.onchange = (e) => {
+                const newData = {
+                    ...data,
+                    [teamName]: {
+                        value: e.target.value,
+                        state: results[index],
+                    },
+                };
+                localStorage.setItem(currentStage, JSON.stringify(newData));
+                setData();
+            };
             options.forEach(option => {
                 const optionNode = document.createElement('option');
                 optionNode.className = className + 'option';
@@ -116,7 +108,6 @@ function setData() {
                 optionNode.selected = currentStageData && currentStageData[teamName] && option === currentStageData[teamName].value;
                 selectNode.appendChild(optionNode);
             })
-            
         });
     }
     const advance = currentStageData && Object.entries(currentStageData).filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
