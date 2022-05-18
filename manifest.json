@@ -1,11 +1,17 @@
 {
     "name": "CSGO HLTV Major Enhancer",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "See your Pick'Ems on HLTV pages",
     "manifest_version": 3,
     "author": "Igor Mitryakov",
     "action":{
-        "default_title": "CSGO HLTV Major"
+        "default_title": "CSGO HLTV Major",
+        "default_popup": "index.html",
+        "default_icon": {
+          "16": "hltv-logo.png",
+          "24": "hltv-logo.png",
+          "32": "hltv-logo.png"
+        }
     },
     "background": {
       "service_worker": "service-worker.js"
@@ -15,6 +21,9 @@
         "matches": ["https://hltv.org/*"],
         "js": ["index.js"]
       }
+    ],
+    "host_permissions": [
+        "https://hltv.org/*"
     ],
     "permissions": ["activeTab", "scripting"]
 }

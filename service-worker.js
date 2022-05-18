@@ -1,6 +1,6 @@
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  chrome.scripting.executeScript({
-    target: {tabId},
-    files: ['index.js']
-  });
+chrome.tabs.onUpdated.addListener((tabId) => {
+    chrome.scripting.executeScript({
+        target: {tabId},
+        files: ['index.js']
+    });
 });
