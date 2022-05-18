@@ -27,7 +27,7 @@ function getActiveTab() {
 function getgroupStage() {
     const title = document.getElementsByClassName('event-hub-title')[0]?.innerText;
     const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0] || {};
-    if (playoffNode) return {
+    if (playoffNode || JSON.parse(localStorage.getItem('legends'))) return {
         playoffStage: 'champions',
         groupStage: 'challengers',
         playoffNode,
@@ -61,7 +61,6 @@ function setData() {
     }
 
     function setGroupData() {
-        
         const teams = getTeamNodes(allTeams).map(team => team[0]);
         const results = [...teams.map(team => team.parentElement.parentElement.parentElement.children)].map(nodes => [...nodes].find((node) => node.className === 'points cell-width-record').innerText);
         teams.forEach((team, index) => {
@@ -132,13 +131,15 @@ function setData() {
     function setPlayoffData() {
         const rounds = [...playoffNode.getElementsByClassName('round')];
         const data = JSON.parse(localStorage.getItem(playoffStage));
+        if (!data) localStorage.setItem(playoffStage, JSON.stringify({}));
         rounds.forEach((round, roundId) => {
             const slot = [...round.getElementsByClassName('slots')][0];
             const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
             const roundName = round.getElementsByClassName('round-header')[0].innerText;
             roundMatches.forEach((match, matchIndex) => {
                 const teamNodes = [...match.children];
-                const matchId = teamNodes.map((node) => roundId + matchIndex).join(' vs ');
+                const matchId = teamNodes.map(() => roundId + matchIndex).join(' vs ');
+                const teamNames = teamNodes.map((node) => node.innerText);
                 teamNodes.forEach((teamNode, teamId) => {
                     const teamName = teamNode.innerText;
                     const teamKey = roundId + matchId + teamId;
@@ -151,6 +152,7 @@ function setData() {
                         teamNode.append(checkNode);
                     }
                     checkNode.onchange = (e) => {
+                        e.stopPropagation();
                         const newData = {
                             ...data,
                             [roundName]: {
@@ -158,7 +160,8 @@ function setData() {
                                 [matchId]: {
                                     [teamKey]: {
                                         value: e.currentTarget.checked,
-                                        teamName,
+                                        teamNames,
+                                        selectedTeam: teamName,
                                     },
                                 },
                                 
@@ -173,7 +176,7 @@ function setData() {
         })
     }
 
-    if (isPlayoff) {
+    if (isOverview && isPlayoff) {
         setPlayoffData();
     }
     const advance = Object.entries(groupData)?.filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
@@ -197,6 +200,26 @@ function setData() {
             value === '0-3' && !state.startsWith('0')
         );
     }).map(([team]) => team);
+    if (isPlayoff) {
+        var wonPlayoffPicks = [];
+        const data = JSON.parse(localStorage.getItem(playoffStage));
+        const matchesNodes = [...document.getElementsByClassName('upcomingMatch')];
+        matchesNodes.forEach((matchNode) => {
+            const teamNodes = [...matchNode.getElementsByClassName('matchTeamName')];
+            const teamNames = teamNodes.map(node => node.innerText);
+            var values = Object.values(data).reduce((obj, round) => {
+                Object.values(round).forEach(match => Object.values(match).forEach(pick => {
+                    if (teamNames[0] === pick.teamNames[0] && teamNames[1] == pick.teamNames[1]) obj[pick.teamNames] = pick
+                }));
+                return obj;
+            }, {});
+            const activeMatch = values[teamNames];
+            if (activeMatch) {
+                const selectedNode = teamNodes.find(teamNode => teamNode.innerText === activeMatch.selectedTeam);
+                wonPlayoffPicks.push(selectedNode);
+            }
+        })
+    }
 
     const defaultStyles = {
         textDecoration: 'none',
@@ -210,6 +233,7 @@ function setData() {
                 color: '#87a3bf',
                 ...defaultStyles,
             },
+            isGroupStage: true,
         },
         {
             teamsCond: (team) => advance.includes(team.innerText),
@@ -217,6 +241,7 @@ function setData() {
                 color: 'green',
                 ...defaultStyles,
             },
+            isGroupStage: true,
         },
         {
             teamsCond: (team) => team.innerText === threeZero,
@@ -224,6 +249,7 @@ function setData() {
                 color: 'orange',
                 ...defaultStyles,
             },
+            isGroupStage: true,
         },
         {
             teamsCond: (team) => team.innerText === zeroThree,
@@ -231,6 +257,7 @@ function setData() {
                 color: 'red',
                 ...defaultStyles,
             },
+            isGroupStage: true,
         },
         {
             teamsCond: (team) => lostPicks.includes(team.innerText),
@@ -239,6 +266,7 @@ function setData() {
                 fontWeight: '400',
                 fontSize: '12px',
             },
+            isGroupStage: true,
         },
         {
             teamsCond: (team) => wonPicks.includes(team.innerText),
@@ -246,12 +274,25 @@ function setData() {
                 fontWeight: '1000',
                 fontSize: '16px',
             },
+            isGroupStage: true,
+        },
+        {
+            style: {
+                color: 'green',
+            },
+            isPlayoffStage: true,
         }
     ];
-    teamSets.forEach(({ teamsCond, style }) => {
+    if (isPlayoff && !isOverview) {
+        return teamSets.filter(set => set.isPlayoffStage).forEach(({ style }) => {
+            setStyle(wonPlayoffPicks, style);
+        })
+    }
+    teamSets.filter(set => set.isGroupStage).forEach(({ teamsCond, style }) => {
         const allTabsTeams = getTeamNodes(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(teamsCond);
         setStyle(allTabsTeams, style)
     });
+    
 }
 
 setData();
