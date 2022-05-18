@@ -24,19 +24,24 @@ function getActiveTab() {
     
 }
 
-function getgroupStage() {
+function getGroupStage() {
     const title = document.getElementsByClassName('event-hub-title')[0]?.innerText;
-    const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0] || {};
-    if (playoffNode || JSON.parse(localStorage.getItem('legends'))) return {
+    const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0];
+    const playoffData = JSON.parse(localStorage.getItem(title))?.[title].champions;
+    const hasPlayoffData = Boolean(playoffData && !!Object.values(playoffData).length || playoffNode);
+    if (hasPlayoffData) return {
         playoffStage: 'champions',
-        groupStage: 'challengers',
+        groupStage: 'legends',
         playoffNode,
+        title,
     }
     if (title.includes('Challengers')) return {
         groupStage: 'challengers',
+        title,
     }
     if (title.includes('Major')) return {
         groupStage: 'legends',
+        title,
     }
     throw `The event is not for Pick'ems`;
 }
@@ -44,10 +49,11 @@ function getgroupStage() {
 function setData() {
     const activeTab = getActiveTab();
     const isOverview = activeTab === 'Overview';
-    const { groupStage, playoffStage, playoffNode } = getgroupStage();
+    const { groupStage, playoffStage, playoffNode, title } = getGroupStage();
     const isPlayoff = !!playoffStage;
-    const groupData = JSON.parse(localStorage.getItem(groupStage)) || {};
-    if (isPlayoff) var playoffData = JSON.parse(localStorage.getItem(playoffStage));
+    const majorData = JSON.parse(localStorage.getItem(title)) || {};
+    const groupData = majorData?.[title]?.[groupStage] || {};
+    if (isPlayoff) var playoffData = majorData?.[title]?.[playoffStage] || {};
     switch (activeTab) {
         case 'Overview':
             var allTeams = [...document.getElementsByClassName('team text-ellipsis')];
@@ -67,22 +73,27 @@ function setData() {
             const teamNodes = Array.from(team.childNodes);
             const teamName = teamNodes[0].firstChild.data;
             const className = 'pick ' + teamName;
-            const data = JSON.parse(localStorage.getItem(groupStage));
             const updatedData = {
-                ...data,
-                [teamName]: {
-                    ...(data || {})[teamName],
-                    state: results[index],
-                },
+                ...majorData,
+                [title]: {
+                    ...majorData?.[title],
+                    [groupStage]: {
+                        ...majorData?.[title]?.[groupStage],
+                        [teamName]: {
+                            ...(majorData?.[title]?.[groupStage] || {})[teamName],
+                            state: results[index],
+                        },
+                    }
+                }
             };
-            localStorage.setItem(groupStage, JSON.stringify(updatedData));
-            const advanceLimit = Object.values(data).filter(({ value }) => value === 'advance').length === 7;
-            const hasZeroThree = !!Object.values(data).find(({ value }) => value === '0-3');
-            const hasThreeZero = !!Object.values(data).find(({ value }) => value === '3-0');
+            localStorage.setItem(title, JSON.stringify(updatedData));
+            const advanceLimit = Object.values(groupData).filter(({ value }) => value === 'advance').length === 7;
+            const hasZeroThree = !!Object.values(groupData).find(({ value }) => value === '0-3');
+            const hasThreeZero = !!Object.values(groupData).find(({ value }) => value === '3-0');
             const options = ['', 'advance', '3-0', '0-3'].filter((option) => {
-                if (hasZeroThree && option === '0-3' && data[teamName]?.value !== '0-3') return false;
-                if (hasThreeZero && option === '3-0' && data[teamName]?.value !== '3-0') return false;
-                if (advanceLimit && option === 'advance' && data[teamName]?.value !== 'advance') return false;
+                if (hasZeroThree && option === '0-3' && groupData[teamName]?.value !== '0-3') return false;
+                if (hasThreeZero && option === '3-0' && groupData[teamName]?.value !== '3-0') return false;
+                if (advanceLimit && option === 'advance' && groupData[teamName]?.value !== 'advance') return false;
                 return true;
             });
             let selectNode = teamNodes.find(node => node.className === className);
@@ -103,14 +114,21 @@ function setData() {
                 selectNode.style.display = 'inline';
             }
             selectNode.onchange = (e) => {
-                const newData = {
-                    ...data,
-                    [teamName]: {
-                        value: e.target.value,
-                        state: results[index],
-                    },
+                const updatedData = {
+                    ...majorData,
+                    [title]: {
+                        ...majorData?.[title],
+                        [groupStage]: {
+                            ...majorData?.[title]?.[groupStage],
+                            [teamName]: {
+                                ...(majorData?.[title]?.[groupStage] || {})[teamName],
+                                value: e.target.value,
+                                state: results[index],
+                            },
+                        }
+                    }
                 };
-                localStorage.setItem(groupStage, JSON.stringify(newData));
+                localStorage.setItem(title, JSON.stringify(updatedData));
                 setData();
             };
             options.forEach(option => {
@@ -130,8 +148,15 @@ function setData() {
 
     function setPlayoffData() {
         const rounds = [...playoffNode.getElementsByClassName('round')];
-        const data = JSON.parse(localStorage.getItem(playoffStage));
-        if (!data) localStorage.setItem(playoffStage, JSON.stringify({}));
+        if (!playoffData) {
+            localStorage.setItem(title, JSON.stringify({ 
+                ...majorData,
+                [title]: {
+                    ...majorData?.[title],
+                    [playoffStage]: {}
+                }
+            }));
+        }
         rounds.forEach((round, roundId) => {
             const slot = [...round.getElementsByClassName('slots')][0];
             const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
@@ -144,6 +169,27 @@ function setData() {
                     const teamName = teamNode.innerText;
                     const teamKey = roundId + matchId + teamId;
                     const className = `${teamName} ${roundName}`;
+                    const updatedData = {
+                        ...majorData,
+                        [title]: {
+                            ...majorData?.[title],
+                            [playoffStage]: {
+                                ...majorData?.[title]?.[playoffStage],
+                                [roundName]: {
+                                    ...majorData?.[title]?.[playoffStage]?.[roundName],
+                                    [matchId]: {
+                                        ...majorData?.[title]?.[playoffStage]?.[roundName]?.[matchId],
+                                        [teamKey]: {
+                                            ...majorData?.[title]?.[playoffStage]?.[roundName]?.[matchId]?.[teamKey],
+                                            teamNames,
+                                            selectedTeam: teamName,
+                                        },
+                                    },
+                                }
+                            }
+                        }
+                    };
+                    localStorage.setItem(title, JSON.stringify(updatedData));
                     let checkNode = teamNode.getElementsByClassName(className)[0];
                     if (!checkNode) {
                         checkNode = document.createElement('input');
@@ -152,25 +198,29 @@ function setData() {
                         teamNode.append(checkNode);
                     }
                     checkNode.onchange = (e) => {
-                        e.stopPropagation();
-                        const newData = {
-                            ...data,
-                            [roundName]: {
-                                ...data?.[roundName] || {},
-                                [matchId]: {
-                                    [teamKey]: {
-                                        value: e.currentTarget.checked,
-                                        teamNames,
-                                        selectedTeam: teamName,
-                                    },
-                                },
-                                
+                        const updatedData = {
+                            ...majorData,
+                            [title]: {
+                                ...majorData?.[title],
+                                [playoffStage]: {
+                                    ...majorData?.[title]?.[playoffStage],
+                                    [roundName]: {
+                                        ...majorData?.[title]?.[playoffStage]?.[roundName],
+                                        [matchId]: {
+                                            [teamKey]: {
+                                                value: e.currentTarget.checked,
+                                                teamNames,
+                                                selectedTeam: teamName,
+                                            },
+                                        },
+                                    }
+                                }
                             }
                         };
-                        localStorage.setItem(playoffStage, JSON.stringify(newData));
-                        setPlayoffData();
+                        localStorage.setItem(title, JSON.stringify(updatedData));
+                        setData();
                     }
-                    checkNode.checked = data?.[roundName]?.[matchId]?.[teamKey]?.value;
+                    checkNode.checked = playoffData?.[roundName]?.[matchId]?.[teamKey]?.value;
                 })
             })
         })
@@ -200,20 +250,19 @@ function setData() {
             value === '0-3' && !state.startsWith('0')
         );
     }).map(([team]) => team);
+    const wonPlayoffPicks = [];
     if (isPlayoff) {
-        var wonPlayoffPicks = [];
-        const data = JSON.parse(localStorage.getItem(playoffStage));
         const matchesNodes = [...document.getElementsByClassName('upcomingMatch')];
         matchesNodes.forEach((matchNode) => {
             const teamNodes = [...matchNode.getElementsByClassName('matchTeamName')];
             const teamNames = teamNodes.map(node => node.innerText);
-            var values = Object.values(data).reduce((obj, round) => {
+            const matchValues = Object.values(playoffData).reduce((obj, round) => {
                 Object.values(round).forEach(match => Object.values(match).forEach(pick => {
                     if (teamNames[0] === pick.teamNames[0] && teamNames[1] == pick.teamNames[1]) obj[pick.teamNames] = pick
                 }));
                 return obj;
             }, {});
-            const activeMatch = values[teamNames];
+            const activeMatch = matchValues[teamNames];
             if (activeMatch) {
                 const selectedNode = teamNodes.find(teamNode => teamNode.innerText === activeMatch.selectedTeam);
                 wonPlayoffPicks.push(selectedNode);
@@ -286,7 +335,7 @@ function setData() {
     if (isPlayoff && !isOverview) {
         return teamSets.filter(set => set.isPlayoffStage).forEach(({ style }) => {
             setStyle(wonPlayoffPicks, style);
-        })
+        });
     }
     teamSets.filter(set => set.isGroupStage).forEach(({ teamsCond, style }) => {
         const allTabsTeams = getTeamNodes(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(teamsCond);
