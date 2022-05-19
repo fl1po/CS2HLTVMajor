@@ -46,6 +46,12 @@ function getGroupStage() {
     throw `The event is not for Pick'ems`;
 }
 
+var defaultStyles = {
+    textDecoration: 'none',
+    fontWeight: '400',
+    fontSize: '12px',
+};
+
 function setData() {
     const activeTab = getActiveTab();
     const isOverview = activeTab === 'Overview';
@@ -54,17 +60,7 @@ function setData() {
     const majorData = JSON.parse(localStorage.getItem(title)) || {};
     const groupData = majorData?.[title]?.[groupStage] || {};
     if (isPlayoff) var playoffData = majorData?.[title]?.[playoffStage] || {};
-    switch (activeTab) {
-        case 'Overview':
-            var allTeams = [...document.getElementsByClassName('team text-ellipsis')];
-            break;
-        case 'Matches':
-            var allTeams = [...document.getElementsByClassName('matchTeam')];
-            break;
-        default:
-            var allTeams = [];
-            break;
-    }
+    const allTeams = [...document.getElementsByClassName(isOverview ? 'team text-ellipsis' : 'matchTeam')] || [];
 
     function setGroupData() {
         const teams = getTeamNodes(allTeams).map(team => team[0]);
@@ -147,7 +143,6 @@ function setData() {
     }
 
     function setPlayoffData() {
-        const rounds = [...playoffNode.getElementsByClassName('round')];
         if (!playoffData) {
             localStorage.setItem(title, JSON.stringify({ 
                 ...majorData,
@@ -157,6 +152,7 @@ function setData() {
                 }
             }));
         }
+        const rounds = [...playoffNode.getElementsByClassName('round')];
         rounds.forEach((round, roundId) => {
             const slot = [...round.getElementsByClassName('slots')][0];
             const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
@@ -168,6 +164,7 @@ function setData() {
                 teamNodes.forEach((teamNode, teamId) => {
                     const teamName = teamNode.innerText;
                     const teamKey = roundId + matchId + teamId;
+                    teamNode.id = teamKey;
                     const className = `${teamName} ${roundName}`;
                     const updatedData = {
                         ...majorData,
@@ -197,6 +194,32 @@ function setData() {
                         checkNode.className = className;
                         teamNode.append(checkNode);
                     }
+                    const selectedKey = playoffData?.[roundName]?.[matchId]?.[teamKey];
+                    checkNode.checked = selectedKey?.value;
+                    if (selectedKey?.selectedTeam === teamNode.innerText && selectedKey.value) {
+                        const oppositeTeam = teamNodes.find(node => node.id !== teamNode.id) || {};
+                        const isWinner = [...teamNode.classList].includes('winner');
+                        const isLoser = [...teamNode.classList].includes('loser');
+                        if (isWinner) {
+                            wonPlayoffPicks.push(teamNode);
+                            setStyle([teamNode], { color: 'green', fontWeight: 700 });
+                        }
+                        if (isLoser) {
+                            lostPlayoffPicks.push(teamNode);
+                            setStyle([teamNode], { color: 'red' });
+                        }
+                        setStyle([oppositeTeam], { 
+                            ...defaultStyles,
+                            color: '#929a9e',
+                            fontSize: '11px'
+                        })
+                    } else {
+                        setStyle([teamNode], { 
+                            ...defaultStyles,
+                            color: '#929a9e',
+                            fontSize: '11px'
+                        })
+                    }
                     checkNode.onchange = (e) => {
                         const updatedData = {
                             ...majorData,
@@ -220,14 +243,9 @@ function setData() {
                         localStorage.setItem(title, JSON.stringify(updatedData));
                         setData();
                     }
-                    checkNode.checked = playoffData?.[roundName]?.[matchId]?.[teamKey]?.value;
                 })
             })
         })
-    }
-
-    if (isOverview && isPlayoff) {
-        setPlayoffData();
     }
     const advance = Object.entries(groupData)?.filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
     const threeZero = (Object.entries(groupData)?.find(([_, { value }]) => value === '3-0') || [])[0];
@@ -250,31 +268,34 @@ function setData() {
             value === '0-3' && !state.startsWith('0')
         );
     }).map(([team]) => team);
+    const selectedPlayoffPicks = [];
     const wonPlayoffPicks = [];
-    if (isPlayoff) {
-        const matchesNodes = [...document.getElementsByClassName('upcomingMatch')];
-        matchesNodes.forEach((matchNode) => {
-            const teamNodes = [...matchNode.getElementsByClassName('matchTeamName')];
-            const teamNames = teamNodes.map(node => node.innerText);
-            const matchValues = Object.values(playoffData).reduce((obj, round) => {
-                Object.values(round).forEach(match => Object.values(match).forEach(pick => {
-                    if (teamNames[0] === pick.teamNames[0] && teamNames[1] == pick.teamNames[1]) obj[pick.teamNames] = pick
-                }));
-                return obj;
-            }, {});
-            const activeMatch = matchValues[teamNames];
-            if (activeMatch) {
-                const selectedNode = teamNodes.find(teamNode => teamNode.innerText === activeMatch.selectedTeam);
-                wonPlayoffPicks.push(selectedNode);
-            }
-        })
+    const lostPlayoffPicks = [];
+
+    if (isOverview && isPlayoff) {
+        setPlayoffData();
     }
 
-    const defaultStyles = {
-        textDecoration: 'none',
-        fontWeight: '400',
-        fontSize: '12px',
-    };
+    if (isPlayoff) {
+        if (!isOverview) {
+            const matchesNodes = [...document.getElementsByClassName('liveMatch'), ...document.getElementsByClassName('upcomingMatch')];
+            matchesNodes.forEach((matchNode) => {
+                const teamNodes = [...matchNode.getElementsByClassName('matchTeamName')];
+                const teamNames = teamNodes.map(node => node.innerText);
+                const matchValues = Object.values(playoffData).reduce((obj, round) => {
+                    Object.values(round).forEach(match => Object.values(match).forEach(pick => {
+                        if (teamNames[0] === pick.teamNames[0] && teamNames[1] == pick.teamNames[1]) obj[pick.teamNames] = pick
+                    }));
+                    return obj;
+                }, {});
+                const activeMatch = matchValues[teamNames];
+                if (activeMatch) {
+                    const selectedNode = teamNodes.find(teamNode => teamNode.innerText === activeMatch.selectedTeam);
+                    selectedPlayoffPicks.push(selectedNode);
+                }
+            })
+        }
+    }
     const teamSets = [
         {
             teamsCond: (team) => ![...advance, threeZero, zeroThree].includes(team.innerText),
@@ -333,8 +354,8 @@ function setData() {
         }
     ];
     if (isPlayoff && !isOverview) {
-        return teamSets.filter(set => set.isPlayoffStage).forEach(({ style }) => {
-            setStyle(wonPlayoffPicks, style);
+        return teamSets.filter(({ isPlayoffStage }) => isPlayoffStage).forEach(({ style }) => {
+            setStyle(selectedPlayoffPicks, style);
         });
     }
     teamSets.filter(set => set.isGroupStage).forEach(({ teamsCond, style }) => {
