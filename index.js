@@ -26,6 +26,7 @@ function getActiveTab() {
 
 function getGroupStage() {
     const title = document.getElementsByClassName('event-hub-title')[0]?.innerText;
+    if (!title) return {};
     const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0];
     const playoffData = JSON.parse(localStorage.getItem(title))?.[title].champions;
     const hasPlayoffData = Boolean(playoffData && !!Object.values(playoffData).length || playoffNode);
@@ -55,7 +56,8 @@ var defaultStyles = {
 function setData() {
     const activeTab = getActiveTab();
     const isOverview = activeTab === 'Overview';
-    const { groupStage, playoffStage, playoffNode, title } = getGroupStage();
+    const { title, groupStage, playoffStage, playoffNode } = getGroupStage();
+    if (!title) return;
     const isPlayoff = !!playoffStage;
     const majorData = JSON.parse(localStorage.getItem(title)) || {};
     const groupData = majorData?.[title]?.[groupStage] || {};
@@ -165,7 +167,7 @@ function setData() {
                     const teamName = teamNode.innerText;
                     const teamKey = roundId + matchId + teamId;
                     teamNode.id = teamKey;
-                    const className = `${teamName} ${roundName}`;
+                    const className = `${teamKey} ${roundName}`;
                     const updatedData = {
                         ...majorData,
                         [title]: {
@@ -196,7 +198,7 @@ function setData() {
                     }
                     const selectedKey = playoffData?.[roundName]?.[matchId]?.[teamKey];
                     checkNode.checked = selectedKey?.value;
-                    if (selectedKey?.selectedTeam === teamNode.innerText && selectedKey.value) {
+                    if (teamNode.innerText.includes(selectedKey?.selectedTeam) && selectedKey.value) {
                         const oppositeTeam = teamNodes.find(node => node.id !== teamNode.id) || {};
                         const isWinner = [...teamNode.classList].includes('winner');
                         const isLoser = [...teamNode.classList].includes('loser');
