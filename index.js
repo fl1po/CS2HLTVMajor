@@ -67,24 +67,24 @@ function setData() {
     function setGroupData() {
         const teams = getTeamNodes(allTeams).map(team => team[0]);
         const results = [...teams.map(team => team.parentElement.parentElement.parentElement.children)].map(nodes => [...nodes].find((node) => node.className === 'points cell-width-record').innerText);
+        let newData = { ...majorData };
         teams.forEach((team, index) => {
             const teamNodes = Array.from(team.childNodes);
             const teamName = teamNodes[0].firstChild.data;
             const className = 'pick ' + teamName;
-            const updatedData = {
-                ...majorData,
+            newData = {
+                ...newData,
                 [title]: {
-                    ...majorData?.[title],
+                    ...newData?.[title],
                     [groupStage]: {
-                        ...majorData?.[title]?.[groupStage],
+                        ...newData?.[title]?.[groupStage],
                         [teamName]: {
-                            ...(majorData?.[title]?.[groupStage] || {})[teamName],
+                            ...(newData?.[title]?.[groupStage])?.[teamName],
                             state: results[index],
                         },
                     }
                 }
             };
-            localStorage.setItem(title, JSON.stringify(updatedData));
             const advanceLimit = Object.values(groupData).filter(({ value }) => value === 'advance').length === 7;
             const hasZeroThree = !!Object.values(groupData).find(({ value }) => value === '0-3');
             const hasThreeZero = !!Object.values(groupData).find(({ value }) => value === '3-0');
@@ -138,6 +138,7 @@ function setData() {
                 selectNode.appendChild(optionNode);
             })
         });
+        localStorage.setItem(title, JSON.stringify(newData));
     }
 
     if (isOverview) {
