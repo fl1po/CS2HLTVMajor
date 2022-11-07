@@ -29,7 +29,19 @@ function getGroupStage() {
     if (!title) return {};
     const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0];
     const playoffData = JSON.parse(localStorage.getItem(title))?.[title].champions;
-    const hasPlayoffData = Boolean(playoffData && !!Object.values(playoffData).length || playoffNode);
+    let hasUndecidedData = false;
+    const playoffStages = Object.values(playoffData);
+    const firstStage = playoffStages[0];
+    const firstStageMatches = Object.keys(firstStage);
+    firstStageMatches.forEach(match => {
+        const matchData = firstStage[match];
+        const game = matchData[Object.keys(matchData)[0]];
+        if (game.teamNames.find(team => team === 'TBD')) {   
+            hasUndecidedData = true;
+        }
+    })
+
+    const hasPlayoffData = Boolean(playoffData && Object.values(playoffData).length || playoffNode) && !hasUndecidedData;
     if (hasPlayoffData) return {
         playoffStage: 'champions',
         groupStage: 'legends',
@@ -357,6 +369,8 @@ function setData() {
         }
     ];
     if (isPlayoff && !isOverview) {
+        console.log({ teamSets });
+        console.log({ selectedPlayoffPicks }); 
         return teamSets.filter(({ isPlayoffStage }) => isPlayoffStage).forEach(({ style }) => {
             setStyle(selectedPlayoffPicks, style);
         });
