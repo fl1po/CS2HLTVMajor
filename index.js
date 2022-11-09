@@ -30,13 +30,13 @@ function getGroupStage() {
     const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0];
     const playoffData = JSON.parse(localStorage.getItem(title))?.[title].champions;
     let hasUndecidedData = false;
-    const playoffStages = Object.values(playoffData);
-    const firstStage = playoffStages[0];
-    const firstStageMatches = Object.keys(firstStage);
-    firstStageMatches.forEach(match => {
-        const matchData = firstStage[match];
-        const game = matchData[Object.keys(matchData)[0]];
-        if (game.teamNames.find(team => team === 'TBD')) {   
+    const rounds = [...playoffNode.getElementsByClassName('round')];
+    const slot = [...rounds[0].getElementsByClassName('slots')][0];
+    const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
+    roundMatches.forEach(match => {
+        const teamNodes = [...match.children];
+        const teamNames = teamNodes.map((node) => node.innerText);
+        if (teamNames.find(team => team === 'TBD')) {   
             hasUndecidedData = true;
         }
     })
