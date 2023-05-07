@@ -30,16 +30,19 @@ function getGroupStage() {
     const playoffNode = document.getElementsByClassName('slotted-bracket-placeholder')?.[0];
     const playoffData = JSON.parse(localStorage.getItem(title))?.[title].champions;
     let hasUndecidedData = false;
-    const rounds = [...playoffNode.getElementsByClassName('round')];
-    const slot = [...rounds[0].getElementsByClassName('slots')][0];
-    const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
-    roundMatches.forEach(match => {
-        const teamNodes = [...match.children];
-        const teamNames = teamNodes.map((node) => node.innerText);
-        if (teamNames.find(team => team === 'TBD')) {   
-            hasUndecidedData = true;
-        }
-    })
+    if (playoffNode) {
+        const rounds = [...playoffNode.getElementsByClassName('round')];
+        const slot = [...rounds[0].getElementsByClassName('slots')][0];
+        const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
+        console.log({ rounds, slot, roundMatches });
+        roundMatches.forEach(match => {
+            const teamNodes = [...match.children];
+            const teamNames = teamNodes.map((node) => node.innerText);
+            if (teamNames.find(team => team === 'TBD')) {   
+                hasUndecidedData = true;
+            }
+        })
+    }
 
     const hasPlayoffData = Boolean(playoffData && Object.values(playoffData).length || playoffNode) && !hasUndecidedData;
     if (hasPlayoffData) return {
