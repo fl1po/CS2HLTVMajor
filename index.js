@@ -32,16 +32,17 @@ function getGroupStage() {
     let hasUndecidedData = false;
     if (playoffNode) {
         const rounds = [...playoffNode.getElementsByClassName('round')];
-        const slot = [...rounds[0].getElementsByClassName('slots')][0];
-        const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
-        console.log({ rounds, slot, roundMatches });
-        roundMatches.forEach(match => {
-            const teamNodes = [...match.children];
-            const teamNames = teamNodes.map((node) => node.innerText);
-            if (teamNames.find(team => team === 'TBD')) {   
-                hasUndecidedData = true;
-            }
-        })
+        if (rounds.length) {
+            const slot = [...rounds[0]?.getElementsByClassName('slots')][0];
+            const roundMatches = [...slot.getElementsByClassName('slot-wrapper')].map((node) => node.getElementsByClassName('match')[0]);
+            roundMatches.forEach(match => {
+                const teamNodes = [...match.children];
+                const teamNames = teamNodes.map((node) => node.innerText);
+                if (teamNames.find(team => team === 'TBD')) {   
+                    hasUndecidedData = true;
+                }
+            })
+        }
     }
 
     const hasPlayoffData = Boolean(playoffData && Object.values(playoffData).length || playoffNode) && !hasUndecidedData;
@@ -372,8 +373,6 @@ function setData() {
         }
     ];
     if (isPlayoff && !isOverview) {
-        console.log({ teamSets });
-        console.log({ selectedPlayoffPicks }); 
         return teamSets.filter(({ isPlayoffStage }) => isPlayoffStage).forEach(({ style }) => {
             setStyle(selectedPlayoffPicks, style);
         });
