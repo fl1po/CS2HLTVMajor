@@ -101,9 +101,9 @@ function setData() {
                     }
                 }
             };
-            const advanceLimit = Object.values(groupData).filter(({ value }) => value === 'advance').length === 7;
-            const hasZeroThree = !!Object.values(groupData).find(({ value }) => value === '0-3');
-            const hasThreeZero = !!Object.values(groupData).find(({ value }) => value === '3-0');
+            const advanceLimit = Object.values(groupData).filter(({ value }) => value === 'advance').length === 6;
+            const hasZeroThree = Object.values(groupData).filter(({ value }) => value === '0-3').length === 2;
+            const hasThreeZero = Object.values(groupData).filter(({ value }) => value === '3-0').length === 2;
             const options = ['', 'advance', '3-0', '0-3'].filter((option) => {
                 if (hasZeroThree && option === '0-3' && groupData[teamName]?.value !== '0-3') return false;
                 if (hasThreeZero && option === '3-0' && groupData[teamName]?.value !== '3-0') return false;
@@ -267,8 +267,8 @@ function setData() {
         })
     }
     const advance = Object.entries(groupData)?.filter(([_, { value }]) => value === 'advance').map(([team]) => team) || [];
-    const threeZero = (Object.entries(groupData)?.find(([_, { value }]) => value === '3-0') || [])[0];
-    const zeroThree = (Object.entries(groupData)?.find(([_, { value }]) => value === '0-3') || [])[0];
+    const threeZero = Object.entries(groupData)?.filter(([_, { value }]) => value === '3-0').map(([team]) => team) || [];
+    const zeroThree = Object.entries(groupData)?.filter(([_, { value }]) => value === '0-3').map(([team]) => team) || [];
     const wonPicks = Object.entries(groupData)?.filter(([_, { value, state }]) => {
         return (
             value === 'advance' && state.startsWith('3')
@@ -317,7 +317,7 @@ function setData() {
     }
     const teamSets = [
         {
-            teamsCond: (team) => ![...advance, threeZero, zeroThree].includes(team.innerText),
+            teamsCond: (team) => ![...advance, ...threeZero, ...zeroThree].includes(team.innerText),
             style: {
                 color: '#87a3bf',
                 ...defaultStyles,
@@ -333,7 +333,7 @@ function setData() {
             isGroupStage: true,
         },
         {
-            teamsCond: (team) => team.innerText === threeZero,
+            teamsCond: (team) => threeZero.includes(team.innerText),
             style: {
                 color: 'orange',
                 ...defaultStyles,
@@ -341,7 +341,7 @@ function setData() {
             isGroupStage: true,
         },
         {
-            teamsCond: (team) => team.innerText === zeroThree,
+            teamsCond: (team) => zeroThree.includes(team.innerText),
             style: {
                 color: 'red',
                 ...defaultStyles,

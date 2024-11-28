@@ -1,11 +1,11 @@
 {
-    "name": "CSGO HLTV Major Enhancer",
-    "version": "1.0.11",
+    "name": "CS2 HLTV Major Enhancer",
+    "version": "1.0.12",
     "description": "See your Pick'Ems on HLTV pages",
     "manifest_version": 3,
     "author": "Igor Mitryakov",
     "action":{
-        "default_title": "CSGO HLTV Major",
+        "default_title": "CS2 HLTV Major",
         "default_popup": "index.html",
         "default_icon": {
           "16": "hltv-logo.png",
