@@ -271,7 +271,7 @@ function setData() {
     const zeroThree = Object.entries(groupData)?.filter(([_, { value }]) => value === '0-3').map(([team]) => team) || [];
     const wonPicks = Object.entries(groupData)?.filter(([_, { value, state }]) => {
         return (
-            value === 'advance' && state.startsWith('3')
+            value === 'advance' && state.startsWith('3') && !state.endsWith('0')
         ) || (
             value === '3-0' && state.startsWith('3') && state.endsWith('0')
         ) || (
@@ -280,13 +280,14 @@ function setData() {
     }).map(([team]) => team);
     const lostPicks = Object.entries(groupData).filter(([_, { value, state }]) => {
         return (
-            value === 'advance' && state.endsWith('3')
+            value === 'advance' && (state.endsWith('3') || (state.startsWith('3') && state.endsWith('0')))
         ) || (
             value === '3-0' && !state.endsWith('0')
         ) || (
             value === '0-3' && !state.startsWith('0')
         );
     }).map(([team]) => team);
+    console.log(lostPicks);
     const selectedPlayoffPicks = [];
     const wonPlayoffPicks = [];
     const lostPlayoffPicks = [];
