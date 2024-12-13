@@ -20,14 +20,7 @@ A browser extension to see your Pick'Ems on HLTV pages.
 6. Click the extension in browser to give permission to access hltv.org
 
 ### Firefox Installation:
-1. Download and build the repository (see Build Instructions)
-2. Go to `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on"
-4. Navigate to the `dist/firefox` directory and select `manifest.json`
-5. Open one of the example pages
-6. Click the extension to give permission to access hltv.org
-
-Note: The Firefox installation is temporary and will need to be reloaded when Firefox restarts.
+`https://addons.mozilla.org/en-US/firefox/addon/cs2-hltv-major-enhancer/`
 
 ### Example Pages:
 * https://www.hltv.org/events/6384/pgl-major-antwerp-2022-challengers-stage
