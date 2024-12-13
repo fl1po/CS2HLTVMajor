@@ -1,0 +1,37 @@
+{
+    "manifest_version": 2,
+    "name": "CS2 HLTV Major Enhancer",
+    "version": "1.1.0",
+    "description": "See your Pick'Ems on HLTV pages",
+    "author": "Igor Mitryakov",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "cs2-hltv-major@mitryakov.dev",
+            "strict_min_version": "58.0"
+        }
+    },
+    "browser_action": {
+        "default_title": "CS2 HLTV Major",
+        "default_popup": "index.html",
+        "default_icon": {
+            "16": "hltv-logo.png",
+            "24": "hltv-logo.png",
+            "32": "hltv-logo.png"
+        }
+    },
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+    "content_scripts": [
+        {
+            "matches": ["*://*.hltv.org/*"],
+            "js": ["index.js"]
+        }
+    ],
+    "permissions": [
+        "*://*.hltv.org/*",
+        "activeTab",
+        "tabs"
+    ]
+}

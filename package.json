@@ -1,0 +1,34 @@
+{
+  "name": "cs2-hltv-major-enhancer",
+  "version": "1.1.0",
+  "description": "See your Pick'Ems on HLTV pages",
+  "author": "Igor Mitryakov",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "build:chrome": "node build.js chrome",
+    "build:firefox": "node build.js firefox",
+    "clean": "rimraf dist/*"
+  },
+  "devDependencies": {
+    "fs-extra": "^11.2.0",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/cs2-hltv-major-enhancer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/cs2-hltv-major-enhancer/issues"
+  },
+  "homepage": "https://github.com/yourusername/cs2-hltv-major-enhancer#readme",
+  "main": "build.js",
+  "keywords": [],
+  "dependencies": {
+    "archiver": "^7.0.1"
+  }
+}

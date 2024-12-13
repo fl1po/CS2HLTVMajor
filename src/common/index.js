@@ -79,6 +79,7 @@ function setData() {
     const groupData = majorData?.[title]?.[groupStage] || {};
     if (isPlayoff) var playoffData = majorData?.[title]?.[playoffStage] || {};
     const allTeams = [...document.getElementsByClassName(isOverview ? 'team text-ellipsis' : 'matchTeam')] || [];
+    console.log(majorData, groupData);
 
     function setGroupData() {
         const teams = getTeamNodes(allTeams).map(team => team[0]);
@@ -154,10 +155,12 @@ function setData() {
                 selectNode.appendChild(optionNode);
             })
         });
+        console.log(title, newData);
         localStorage.setItem(title, JSON.stringify(newData));
     }
 
     if (isOverview) {
+        console.log('overview');
         setGroupData();
     }
 
@@ -278,6 +281,7 @@ function setData() {
             value === '0-3' && state.startsWith('0') && state.endsWith('3')
         )
     }).map(([team]) => team);
+    // console.log(groupData);
     const lostPicks = Object.entries(groupData).filter(([_, { value, state }]) => {
         return (
             value === 'advance' && (state.endsWith('3') || (state.startsWith('3') && state.endsWith('0')))
@@ -287,7 +291,6 @@ function setData() {
             value === '0-3' && !state.startsWith('0')
         );
     }).map(([team]) => team);
-    console.log(lostPicks);
     const selectedPlayoffPicks = [];
     const wonPlayoffPicks = [];
     const lostPlayoffPicks = [];
