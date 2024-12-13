@@ -20,7 +20,7 @@ A browser extension to see your Pick'Ems on HLTV pages.
 6. Click the extension in browser to give permission to access hltv.org
 
 ### Firefox Installation:
-`https://addons.mozilla.org/en-US/firefox/addon/cs2-hltv-major-enhancer/`
+* https://addons.mozilla.org/en-US/firefox/addon/cs2-hltv-major-enhancer/
 
 ### Example Pages:
 * https://www.hltv.org/events/6384/pgl-major-antwerp-2022-challengers-stage
