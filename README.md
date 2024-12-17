@@ -2,25 +2,13 @@
 
 A browser extension to see your Pick'Ems on HLTV pages.
 
-## Build Instructions
-1. Install Node.js if you haven't already
-2. Clone/download the repository
-3. Run `npm install` to install dependencies
-4. Run `node build.js` to build the extension
-   - This will create Chrome and Firefox versions in the `dist` directory
-
 ## Installation
 
-### Chrome Installation:
-1. Download and build the repository (see Build Instructions)
-2. Go to `chrome://extensions`
-3. Enable developer mode
-4. Click "Load unpacked extension" and select the `dist/chrome` directory
-5. Open one of the example pages
-6. Click the extension in browser to give permission to access hltv.org
+### Chrome Installation
+Install directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/cs2-hltv-major-enhancer/phckaekhenkplmhbplmapgdilgenpail)
 
-### Firefox Installation:
-* https://addons.mozilla.org/en-US/firefox/addon/cs2-hltv-major-enhancer/
+### Firefox Installation
+Install directly from the [Firefox Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/cs2-hltv-major-enhancer/)
 
 ### Example Pages:
 * https://www.hltv.org/events/6384/pgl-major-antwerp-2022-challengers-stage
