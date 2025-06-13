@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "CS2 HLTV Major Enhancer",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "See your Pick'Ems on HLTV pages",
     "author": "Igor Mitryakov",
     "browser_specific_settings": {
