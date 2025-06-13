@@ -78,7 +78,7 @@ function setData() {
     const majorData = JSON.parse(localStorage.getItem(title)) || {};
     const groupData = majorData?.[title]?.[groupStage] || {};
     if (isPlayoff) var playoffData = majorData?.[title]?.[playoffStage] || {};
-    const allTeams = [...document.getElementsByClassName(isOverview ? 'team text-ellipsis' : 'matchTeam')] || [];
+    const allTeams = [...document.getElementsByClassName(isOverview ? 'team text-ellipsis' : 'match-teamname')] || [];
     console.log(majorData, groupData);
 
     function setGroupData() {
@@ -281,7 +281,6 @@ function setData() {
             value === '0-3' && state.startsWith('0') && state.endsWith('3')
         )
     }).map(([team]) => team);
-    // console.log(groupData);
     const lostPicks = Object.entries(groupData).filter(([_, { value, state }]) => {
         return (
             value === 'advance' && (state.endsWith('3') || (state.startsWith('3') && state.endsWith('0')))
@@ -382,7 +381,7 @@ function setData() {
         });
     }
     teamSets.filter(set => set.isGroupStage).forEach(({ teamsCond, style }) => {
-        const allTabsTeams = getTeamNodes(allTeams).map(team => isOverview ? team[0].firstChild : team.children[1]).filter(teamsCond);
+        const allTabsTeams = getTeamNodes(allTeams).map(team => isOverview ? team[0].firstChild : team).filter(teamsCond);
         setStyle(allTabsTeams, style)
     });
     
