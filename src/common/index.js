@@ -74,8 +74,44 @@ const HltvPage = (() => {
     return byClass("event-hub-title")[0]?.innerText;
   }
 
+  // An event can show more than one bracket (group playoffs are one placeholder
+  // per group), so every read has to walk all of them, not just the first.
+  function bracketRoots() {
+    return [...byClass("slotted-bracket-placeholder")];
+  }
+
   function hasBracket() {
-    return Boolean(byClass("slotted-bracket-placeholder")?.[0]);
+    return bracketRoots().length > 0;
+  }
+
+  // HLTV hides `.team-name` while a round is collapsed and floats the score
+  // beside it, so `innerText` on a bracket team is "" or "MOUZ\n1". The name
+  // only ever lives in `.team-name`.
+  function bracketTeamName(teamNode) {
+    const nameNode = byClass("team-name", teamNode)[0];
+    return (nameNode?.textContent ?? teamNode.innerText ?? "").trim();
+  }
+
+  // A round header shows the round's short name while collapsed and its full
+  // name while expanded, so the visible text flips whenever the user toggles a
+  // round. The bracket model carries both spellings; map every short name back
+  // to the full one so a pick keeps its key across a toggle.
+  function canonicalRoundNames(root) {
+    const names = {};
+    let model;
+    try {
+      model = JSON.parse(root.dataset.slottedBracketJson);
+    } catch {
+      return names;
+    }
+    (function collect(node) {
+      if (!node || typeof node !== "object") return;
+      if (typeof node.name === "string" && typeof node.shortName === "string") {
+        names[node.shortName] = node.name;
+      }
+      Object.values(node).forEach(collect);
+    })(model);
+    return names;
   }
 
   const overviewNameNodes = () =>
@@ -106,41 +142,50 @@ const HltvPage = (() => {
   }
 
   function playoffBracket() {
-    if (!hasBracket()) return [];
-    const root = byClass("slotted-bracket-placeholder")[0];
-    const rounds = [...byClass("round", root)];
-    return rounds.map((round, roundId) => {
-      const roundName = byClass("round-header", round)[0]?.innerText;
-      const slot = [...byClass("slots", round)][0];
-      if (!slot) return { roundName, matches: [] };
-      const matchNodes = [...byClass("slot-wrapper", slot)].map(
-        (node) => byClass("match", node)[0],
-      );
-      const matches = matchNodes.map((match, matchIndex) => {
-        const teamNodes = [...match.children];
-        const matchId = teamNodes.map(() => roundId + matchIndex).join(" vs ");
-        const teamNames = teamNodes.map((node) => node.innerText);
-        const teams = teamNodes.map((node, teamId) => {
-          const teamKey = roundId + matchId + teamId;
-          node.id = teamKey;
-          return { name: node.innerText, teamKey, node };
-        });
-        return { matchId, teamNames, teams };
+    const rounds = [];
+    let roundId = 0;
+    bracketRoots().forEach((root) => {
+      const canonical = canonicalRoundNames(root);
+      [...byClass("round", root)].forEach((round) => {
+        // Every `.round` consumes an id, including the empty spacer rounds HLTV
+        // uses to line the upper and lower tiers up, and the counter runs across
+        // brackets, so ids stay unique and stable.
+        const currentRoundId = roundId++;
+        const slot = byClass("slots", round)[0];
+        if (!slot) return;
+        const header = byClass("round-header", round)[0]?.innerText;
+        const roundName =
+          canonical[header] ?? header ?? `round ${currentRoundId}`;
+        const matches = [...byClass("slot-wrapper", slot)]
+          .map((node) => byClass("match", node)[0])
+          .filter(Boolean)
+          .map((match, matchIndex) => {
+            const teamNodes = [...match.children];
+            const matchId = teamNodes
+              .map(() => currentRoundId + matchIndex)
+              .join(" vs ");
+            const teams = teamNodes.map((node, teamId) => ({
+              name: bracketTeamName(node),
+              teamKey: currentRoundId + matchId + teamId,
+              node,
+            }));
+            return { matchId, teamNames: teams.map(({ name }) => name), teams };
+          });
+        rounds.push({ roundName, matches });
       });
-      return { roundName, matches };
     });
+    return rounds;
   }
 
   function matchesTabRows() {
-    const matchNodes = [
-      ...byClass("liveMatch"),
-      ...byClass("upcomingMatch"),
-    ];
-    return matchNodes.map((matchNode) => {
-      const teamNodes = [...byClass("matchTeamName", matchNode)];
-      const teamNames = teamNodes.map((node) => node.innerText);
-      return { teamNodes, teamNames };
-    });
+    return [...byClass("match-wrapper")]
+      .map((matchNode) => {
+        const teamNodes = [...byClass("match-teamname", matchNode)];
+        const teamNames = teamNodes.map((node) => node.innerText.trim());
+        return { teamNodes, teamNames };
+      })
+      // A row whose teams are not drawn yet carries no team names at all.
+      .filter(({ teamNodes }) => teamNodes.length === 2);
   }
 
   return {
@@ -170,6 +215,11 @@ function detectStage(store, title, bracket) {
     return { playoffStage: "champions", groupStage: "legends" };
   if (title.includes("Challengers")) return { groupStage: "challengers" };
   if (title.includes("Major")) return { groupStage: "legends" };
+  // An undecided bracket means "the group stage is still running" only on a
+  // Major, which shows both on one page. Anywhere else the bracket is all there
+  // is, so an unseeded one is still the thing to pick on.
+  if (HltvPage.hasBracket())
+    return { playoffStage: "champions", groupStage: "legends" };
   throw `The event is not for Pick'ems`;
 }
 
@@ -279,6 +329,9 @@ function setData() {
         ),
       ),
     );
+    // Re-read: the batch above refreshed every team name from the page, and the
+    // snapshot taken before it still carries the previous run's names.
+    const picks = store.getPlayoffPicks(playoffStage);
     bracket.forEach(({ roundName, matches }) => {
       matches.forEach(({ matchId, teamNames, teams }) => {
         teams.forEach(({ name: teamName, teamKey, node: teamNode }) => {
@@ -290,14 +343,11 @@ function setData() {
             checkNode.className = className;
             teamNode.append(checkNode);
           }
-          const selectedKey = playoffData?.[roundName]?.[matchId]?.[teamKey];
-          checkNode.checked = selectedKey?.value;
-          if (
-            teamNode.innerText.includes(selectedKey?.selectedTeam) &&
-            selectedKey.value
-          ) {
+          const selectedKey = picks?.[roundName]?.[matchId]?.[teamKey];
+          checkNode.checked = Boolean(selectedKey?.value);
+          if (selectedKey?.value) {
             const oppositeTeam =
-              teams.find((other) => other.node.id !== teamNode.id)?.node || {};
+              teams.find((other) => other.node !== teamNode)?.node || {};
             const isWinner = [...teamNode.classList].includes("winner");
             const isLoser = [...teamNode.classList].includes("loser");
             if (isWinner) {
@@ -376,25 +426,20 @@ function setData() {
   }
 
   if (isPlayoff && !isOverview) {
+    // Every team of every bracket match is stored, picked or not, so match on
+    // the picked one only — otherwise the last team of the match always wins.
+    const madePicks = Object.values(playoffData)
+      .flatMap((round) => Object.values(round))
+      .flatMap((match) => Object.values(match))
+      .filter((pick) => pick.value && pick.teamNames);
     HltvPage.matchesTabRows().forEach(({ teamNodes, teamNames }) => {
-      const matchValues = Object.values(playoffData).reduce((obj, round) => {
-        Object.values(round).forEach((match) =>
-          Object.values(match).forEach((pick) => {
-            if (
-              teamNames[0] === pick.teamNames[0] &&
-              teamNames[1] == pick.teamNames[1]
-            )
-              obj[pick.teamNames] = pick;
-          }),
-        );
-        return obj;
-      }, {});
-      const activeMatch = matchValues[teamNames];
-      if (activeMatch) {
-        const selectedNode = teamNodes.find(
-          (teamNode) => teamNode.innerText === activeMatch.selectedTeam,
-        );
-        selectedPlayoffPicks.push(selectedNode);
+      const pick = madePicks.find(
+        ({ teamNames: picked }) =>
+          picked[0] === teamNames[0] && picked[1] === teamNames[1],
+      );
+      const selectedIndex = teamNames.indexOf(pick?.selectedTeam);
+      if (selectedIndex !== -1) {
+        selectedPlayoffPicks.push(teamNodes[selectedIndex]);
       }
     });
   }

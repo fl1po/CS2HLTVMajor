@@ -18,8 +18,24 @@ The Swiss stage of a Major. It is either the **Challengers** stage or the
 **Legends** stage. Group picks are made via a `<select>` next to each team.
 
 **Playoff stage** / **Champions**
-The single-elimination bracket. The playoff stage key is always `champions`.
-Playoff picks are made via a checkbox on each bracket team.
+The bracket. The playoff stage key is always `champions`. Playoff picks are
+made via a checkbox on each bracket team.
+
+A Major draws one single-elimination bracket. Other events draw a double
+elimination bracket — two tiers (upper/lower), padded with empty spacer rounds
+so the tiers line up — and an event with group playoffs draws one bracket per
+group, so there can be several on a page. Three consequences the selectors have
+to respect:
+
+- A bracket team's `innerText` is **not** its name. HLTV hides `.team-name`
+  while a round is collapsed (`display: none`) and floats the score next to it,
+  so `innerText` reads `""` or `"MOUZ\n1"`. The name is only in `.team-name`.
+- A round header shows the round's **short** name while collapsed and its full
+  name while expanded, and the header is the click target that toggles it — so
+  the visible text is not a stable key. The canonical name comes from the
+  `data-slotted-bracket-json` model on the placeholder.
+- Round ids run across every bracket on the page and count the spacer rounds,
+  so a pick's key stays unique and stable no matter how the tiers are drawn.
 
 **Group pick value** — one of:
 - `advance` — predicted to advance (3-1 or 3-2)
