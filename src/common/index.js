@@ -12,6 +12,8 @@ var defaultStyles = {
   fontSize: "12px",
 };
 
+const PICK_CHECKBOX_CLASS = "cs2-pickems-playoff-pick";
+
 
 function setIn(obj, path, leaf) {
   if (path.length === 0) return { ...obj, ...leaf };
@@ -146,7 +148,7 @@ const HltvPage = (() => {
     let roundId = 0;
     bracketRoots().forEach((root) => {
       const canonical = canonicalRoundNames(root);
-      [...byClass("round", root)].forEach((round) => {
+      [...root.querySelectorAll(".rounds > .round")].forEach((round) => {
         // Every `.round` consumes an id, including the empty spacer rounds HLTV
         // uses to line the upper and lower tiers up, and the counter runs across
         // brackets, so ids stay unique and stable.
@@ -335,12 +337,11 @@ function setData() {
     bracket.forEach(({ roundName, matches }) => {
       matches.forEach(({ matchId, teamNames, teams }) => {
         teams.forEach(({ name: teamName, teamKey, node: teamNode }) => {
-          const className = `${teamKey} ${roundName}`;
-          let checkNode = teamNode.getElementsByClassName(className)[0];
+          let checkNode = teamNode.getElementsByClassName(PICK_CHECKBOX_CLASS)[0];
           if (!checkNode) {
             checkNode = document.createElement("input");
             checkNode.type = "checkbox";
-            checkNode.className = className;
+            checkNode.className = PICK_CHECKBOX_CLASS;
             teamNode.append(checkNode);
           }
           const selectedKey = picks?.[roundName]?.[matchId]?.[teamKey];
